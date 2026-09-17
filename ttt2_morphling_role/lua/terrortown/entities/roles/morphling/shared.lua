@@ -2,6 +2,15 @@ if SERVER then
   AddCSLuaFile()
 
   resource.AddFile("materials/vgui/ttt/dynamic/roles/icon_morph.vmt")
+
+  CreateConVar(
+    "ttt2_morphling_reveal_role_to_team",
+    "1",
+    {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED},
+    "If enabled, teammates can see the Morphling's real role while disguised.",
+    0,
+    1
+  )
 end
 
 function ROLE:PreInitialize()
@@ -14,7 +23,7 @@ function ROLE:PreInitialize()
   self.preventFindCredits = false
   self.preventKillCredits = false
   self.preventTraitorAloneCredits = false
-  
+
   self.isOmniscientRole = true
 
   self.defaultEquipment = SPECIAL_EQUIPMENT -- here you can set up your own default equipment
@@ -37,19 +46,33 @@ function ROLE:Initialize()
   roles.SetBaseRole(self, ROLE_TRAITOR)
 end
 
+if CLIENT then
+  function ROLE:AddToSettingsMenu(parent)
+    local form = vgui.CreateTTT2Form(parent, "header_roles_additional")
+
+    form:MakeCheckBox({
+      serverConvar = "ttt2_morphling_reveal_role_to_team",
+      label = "label_morphling_reveal_role_to_team"
+    })
+
+    form:MakeHelp({
+      label = "help_morphling_reveal_role_to_team"
+    })
+  end
+end
 
 if SERVER then
-   -- Give Loadout on respawn and rolechange
-	function ROLE:GiveRoleLoadout(ply, isRoleChange)
-		ply:GiveEquipmentWeapon("weapon_ttt_morph_disguise")
-		ply:DeactivateDisguiserTarget()
-	    ply:UpdateStoredDisguiserTarget(nil)
-	end
+  -- Give loadout on respawn and rolechange
+  function ROLE:GiveRoleLoadout(ply, isRoleChange)
+    ply:GiveEquipmentWeapon("weapon_ttt_morph_disguise")
+    ply:DeactivateDisguiserTarget()
+    ply:UpdateStoredDisguiserTarget(nil, nil, nil, false)
+  end
 
-	-- Remove Loadout on death and rolechange
-	function ROLE:RemoveRoleLoadout(ply, isRoleChange)
-		ply:StripWeapon("weapon_ttt_morph_disguise")
-		ply:DeactivateDisguiserTarget()
-	    ply:UpdateStoredDisguiserTarget(nil)
-	end
+  -- Remove loadout on death and rolechange
+  function ROLE:RemoveRoleLoadout(ply, isRoleChange)
+    ply:StripWeapon("weapon_ttt_morph_disguise")
+    ply:DeactivateDisguiserTarget()
+    ply:UpdateStoredDisguiserTarget(nil, nil, nil, false)
+  end
 end
